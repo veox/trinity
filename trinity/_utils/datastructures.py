@@ -436,7 +436,7 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
     _dependency_of: StaticMethod[Callable[[TTask], TTaskID]]
 
     # by default, how long should the integrator wait before pruning?
-    _default_max_depth = 100  # not sure how to pick a good default here
+    _default_max_depth = 10  # not sure how to pick a good default here
 
     _prereq_tracker: Type[BaseTaskPrerequisites[TTask, TPrerequisite]]
 
@@ -530,7 +530,7 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
 
         if duplicates and not ignore_duplicates:
             raise DuplicateTasks(
-                f"Cannot re-register tasks: {duplicates!r} for completion",
+                f"Cannot re-register duplicate tasks for completion: {duplicates!r}",
                 duplicates,
             )
 
@@ -636,7 +636,12 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
             # No tasks are old enough to prune, can end immediately
             return
 
-        root_id, depth = self._find_root(oldest_id)
+        try:
+            root_id, depth = self._find_root(oldest_id)
+        except ValidationError:
+            # dependency too deep
+            return
+
         unpruned = self._prune_forward(root_id, depth)
         if oldest_id not in unpruned:
             raise ValidationError(
@@ -665,14 +670,32 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
         get_dependency_of_id = compose(self._dependency_of, attrgetter('task'), self._tasks.get)
         # We'll use the maximum saved history (_max_depth) to cap how long the stale cache
         # of history might get, when pruning. Increasing the cap should not be a problem, if needed.
-        for depth in range(0, self._max_depth):
+        for depth in range(0, self._max_depth + 1):
             dependency = get_dependency_of_id(root_candidate)
             if dependency not in self._tasks:
                 return root_candidate, depth
             else:
                 root_candidate = dependency
+
+        # DEBUG traverse till found!..
+        debug_depth = depth
+        debug_dependency = dependency
+        debug_root_candidate = root_candidate
+        debug_found = False
+        while debug_dependency in self._tasks:
+            debug_dependency = get_dependency_of_id(debug_root_candidate)
+            debug_depth += 1
+            if debug_dependency not in self._tasks:
+                debug_found = True
+                break
+            else:
+                debug_root_candidate = debug_dependency
+
         raise ValidationError(
-            f"Stale task history too long ({depth}) before pruning. {dependency} is still in cache."
+            f"Stale task history too long before pruning, while looking for root dependency "
+            f"of task {task_id}. Dependency {dependency} at depth {depth} is still in cache. "
+            f"DEBUG: depth {debug_depth}; dependency {debug_dependency}; "
+            f"root candidate {debug_root_candidate}; found {debug_found}"
         )
 
     def _prune_forward(self, root_id: TTaskID, depth: int) -> Tuple[TTaskID]:

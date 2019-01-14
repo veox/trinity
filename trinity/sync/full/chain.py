@@ -447,9 +447,17 @@ class FastChainBodySyncer(BaseBodyChainSyncer):
             except DuplicateTasks as exc:
                 # Likely scenario: switched which peer downloads headers, and the new peer isn't
                 # aware of some of the in-progress headers
-                self.logger.debug("Duplicate headers during fast sync %r, skipping", exc.duplicates)
+                self.logger.debug(
+                    "Duplicate headers during fast sync (%s total), skipping...",
+                    len(exc.duplicates)
+                )
                 non_duplicates = tuple(header for header in headers if header not in exc.duplicates)
+                self.logger.debug(
+                    "Non-duplicate headers selected (%s of %s total), registering tasks...",
+                    len(non_duplicates), len(headers)
+                )
                 self._block_persist_tracker.register_tasks(non_duplicates)
+                self.logger.debug("Done re-registering non-duplicate header tasks.")
             except MissingDependency:
                 # The parent of this header is not registered as a dependency yet.
                 # Some reasons this might happen, in rough descending order of likelihood:

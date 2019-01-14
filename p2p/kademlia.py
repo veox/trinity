@@ -154,8 +154,8 @@ def from_uris(uris: Iterable[str]) -> Iterator[Node]:
 class KBucket(Sized):
     """A bucket of nodes whose IDs fall between the bucket's start and end.
 
-    The bucket is kept sorted by time last seen—least-recently seen node at the head,
-    most-recently seen at the tail.
+    The bucket is kept with nodes sorted by time seen—least-recently at the head,
+    seen-most-recently at the tail.
     """
     k = k_bucket_size
 
