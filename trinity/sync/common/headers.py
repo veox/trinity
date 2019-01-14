@@ -600,6 +600,7 @@ class HeaderMeatSyncer(BaseService, PeerSubscriber, Generic[TChainPeer]):
         except BaseP2PError as exc:
             self.logger.info("Unexpected p2p err while downloading headers from %s: %s", peer, exc)
             self.logger.debug("Problem downloading headers from peer, dropping...", exc_info=True)
+            self.logger.debug("XXXXX Running %s", fail_task_fn.__name__)
             fail_task_fn()
         except OperationCancelled:
             self.logger.debug(
@@ -612,6 +613,7 @@ class HeaderMeatSyncer(BaseService, PeerSubscriber, Generic[TChainPeer]):
         except Exception as exc:
             self.logger.info("Unexpected err while downloading headers from %s: %s", peer, exc)
             self.logger.debug("Problem downloading headers from peer, dropping...", exc_info=True)
+            self.logger.debug("XXXXX Running %s", fail_task_fn.__name__)
             fail_task_fn()
         else:
             if len(completed_headers) == length:
