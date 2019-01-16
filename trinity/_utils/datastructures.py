@@ -674,12 +674,29 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
         get_dependency_of_id = compose(self._dependency_of, attrgetter('task'), self._tasks.get)
         # We'll use the maximum saved history (_max_depth) to cap how long the stale cache
         # of history might get, when pruning. Increasing the cap should not be a problem, if needed.
-        for depth in range(0, 2 * self._max_depth + 1):
+        for depth in range(0, self._max_depth + 1):
             dependency = get_dependency_of_id(root_candidate)
             if dependency not in self._tasks:
                 return root_candidate, depth
             else:
                 root_candidate = dependency
+
+        # DEBUG traverse till found!..
+        debug_depth = depth
+        debug_dependency = dependency
+        debug_root_candidate = root_candidate
+        debug_found = False
+        self.logger.warning("Reached max depth %s without finding task dependency.", depth)
+        while debug_dependency in self._tasks:
+            debug_dependency = get_dependency_of_id(debug_root_candidate)
+            debug_depth += 1
+            if debug_dependency not in self._tasks:
+                self.logger.warning("Found candidate %s at depth %s.",
+                                    debug_root_candidate, debug_depth)
+                return debug_root_candidate, debug_depth
+            else:
+                debug_root_candidate = debug_dependency
+
         raise ValidationError(
             f"Stale task history too long ({depth}) before pruning. {dependency} is still in cache."
         )
