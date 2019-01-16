@@ -14,6 +14,7 @@ from itertools import (
     count,
     repeat,
 )
+import logging
 from operator import attrgetter
 from typing import (
     Any,
@@ -446,6 +447,8 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
     It can be used like so: `OrderedTaskPreparation(OrderedTaskPreparation.NoPrerequisites, ...)`
     """
 
+    _logger: logging.Logger = None
+
     def __init__(
             self,
             prerequisites: Type[TPrerequisite],
@@ -487,6 +490,12 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
 
         # Declared finished with set_finished_dependency()
         self._declared_finished: Set[TTaskID] = set()
+
+    @property
+    def logger(self) -> logging.Logger:
+        if self._logger is None:
+            self._logger = logging.getLogger(f"FIXME.utils.{type(self).__name__}")
+        return self._logger
 
     def set_finished_dependency(self, finished_task: TTask) -> None:
         """
