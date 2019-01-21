@@ -679,11 +679,12 @@ class HeaderMeatSyncer(BaseService, PeerSubscriber, Generic[TChainPeer]):
 
     async def _request_headers(
             self, peer: TChainPeer, start_at: BlockNumber, length: int) -> Tuple[BlockHeader, ...]:
-        self.logger.debug("Requesting %d headers from %s", length, peer)
+        self.logger.debug("Requesting %d headers (starting at #%d) from %s", length, start_at, peer)
         try:
             return await peer.requests.get_block_headers(start_at, length, skip=0, reverse=False)
         except TimeoutError as err:
-            self.logger.debug("Timed out requesting %d headers from %s", length, peer)
+            self.logger.debug("Timed out requesting %d headers (starting at #%d) from %s",
+                              length, start_at, peer)
             return tuple()
         except CancelledError:
             self.logger.debug("Pending headers call to %r future cancelled", peer)
@@ -692,10 +693,11 @@ class HeaderMeatSyncer(BaseService, PeerSubscriber, Generic[TChainPeer]):
             self.logger.debug2("Pending headers call to %r operation cancelled", peer)
             return tuple()
         except PeerConnectionLost:
-            self.logger.debug("Peer went away, cancelling the headers request and moving on...")
+            self.logger.debug("Peer %r went away, cancelling the headers request and moving on...",
+                              peer)
             return tuple()
         except Exception:
-            self.logger.exception("Unknown error when getting headers")
+            self.logger.exception("Unknown error when getting headers from %r", peer)
             raise
 
 

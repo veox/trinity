@@ -264,12 +264,15 @@ class BaseBodyChainSyncer(BaseService, PeerSubscriber):
         Requests the batch of block bodies from the given peer, returning the
         returned block bodies data, or an empty tuple on an error.
         """
-        self.logger.debug("Requesting block bodies for %d headers from %s", len(batch), peer)
+        self.logger.debug("Requesting block bodies for %d headers (starting with %s) from %s",
+                          len(batch), batch[0], peer
+        )
         try:
             block_body_bundles = await peer.requests.get_block_bodies(batch)
         except TimeoutError as err:
             self.logger.debug(
-                "Timed out requesting block bodies for %d headers from %s", len(batch), peer,
+                "Timed out requesting block bodies for %d headers (starting with %s) from %s",
+                len(batch), batch[0], peer,
             )
             return tuple()
         except CancelledError:
@@ -279,10 +282,12 @@ class BaseBodyChainSyncer(BaseService, PeerSubscriber):
             self.logger.debug2("Pending block bodies call to %r operation cancelled", peer)
             return tuple()
         except PeerConnectionLost:
-            self.logger.debug("Peer went away, cancelling the block body request and moving on...")
+            self.logger.debug("Peer %r went away, cancelling block body request and moving on...",
+                              peer
+            )
             return tuple()
         except Exception:
-            self.logger.exception("Unknown error when getting block bodies")
+            self.logger.exception("Unknown error when getting block bodies from %r", peer)
             raise
 
         return block_body_bundles
