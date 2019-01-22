@@ -209,6 +209,9 @@ class BasePeer(BaseService):
         # The private key this peer uses for identification and encryption.
         self.privkey = privkey
 
+        # The self-identifying string that the remote names itself.
+        self.client_version_string = None
+
         # Networking reader and writer objects for communication
         self.reader = connection.reader
         self.writer = connection.writer
@@ -491,6 +494,9 @@ class BasePeer(BaseService):
         if not cmd.cmd_type == Hello:
             await self.disconnect(DisconnectReason.bad_protocol)
             raise HandshakeFailure(f"Expected a Hello msg, got {cmd}, disconnecting")
+
+        # FIXME: limit number of chars elsewhere
+        self.client_version_string = msg['client_version_string'][:96]
 
         # Snappy compression is negotiated indirectly, by comparing protocol versions;
         # if both sides support v5, then compression is mandatory
@@ -1056,6 +1062,7 @@ class BasePeerPool(BaseService, AsyncIterable[BasePeer]):
                     "%s: uptime=%s, received_msgs=%d, most_received=%s(%d)",
                     peer, peer.uptime, peer.received_msgs_count,
                     most_received_type, count)
+                self.logger.debug("client_version_string='%s'", peer.client_version_string)
                 for line in peer.get_extra_stats():
                     self.logger.debug("    %s", line)
             self.logger.debug("== End peer details == ")
