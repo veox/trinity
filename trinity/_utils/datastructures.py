@@ -31,6 +31,7 @@ from typing import (
 
 from eth_utils import (
     ValidationError,
+    to_hex,
     to_tuple,
 )
 from eth_utils.toolz import (
@@ -437,7 +438,7 @@ class OrderedTaskPreparation(Generic[TTask, TTaskID, TPrerequisite]):
     _dependency_of: StaticMethod[Callable[[TTask], TTaskID]]
 
     # by default, how long should the integrator wait before pruning?
-    _default_max_depth = 10000  # not sure how to pick a good default here
+    _default_max_depth = 500  # not sure how to pick a good default here
 
     _prereq_tracker: Type[BaseTaskPrerequisites[TTask, TPrerequisite]]
 
