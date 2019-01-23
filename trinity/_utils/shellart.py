@@ -3,6 +3,10 @@ from termcolor import (
 )
 
 
+def bold(txt: str) -> str:
+    return colored(txt, attrs=['bold'])
+
+
 def bold_green(txt: str) -> str:
     return colored(txt, 'green', attrs=['bold'])
 

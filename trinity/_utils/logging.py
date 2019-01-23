@@ -29,6 +29,7 @@ from eth.tools.logging import (
 )
 
 from trinity._utils.shellart import (
+    bold,
     bold_red,
     bold_yellow,
 )
@@ -43,7 +44,7 @@ LOG_MAX_MB = 5
 class TrinityLogFormatter(logging.Formatter):
 
     def __init__(self, fmt: str, datefmt: str) -> None:
-        super().__init__(fmt, datefmt)
+        super().__init__(fmt, )#datefmt)
 
     def format(self, record: logging.LogRecord) -> str:
         record.shortname = record.name.split('.')[-1]  # type: ignore
@@ -52,6 +53,8 @@ class TrinityLogFormatter(logging.Formatter):
             return bold_red(super().format(record))
         elif record.levelno >= logging.WARNING:
             return bold_yellow(super().format(record))
+        elif record.levelno >= logging.INFO:
+            return bold(super().format(record))
         else:
             return super().format(record)
 
@@ -87,7 +90,7 @@ def setup_trinity_stderr_logging(level: int=None,
 
     # TODO: allow configuring `detailed` logging
     formatter = TrinityLogFormatter(
-        fmt='%(levelname)8s  %(asctime)s  %(shortname)20s  %(message)s',
+        fmt='%(levelname)8s  %(asctime)s  %(shortname)23s  %(message)s',
         datefmt='%m-%d %H:%M:%S'
     )
 
