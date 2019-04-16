@@ -87,7 +87,7 @@ def setup_trinity_stderr_logging(level: int=None,
 
     # TODO: allow configuring `detailed` logging
     formatter = TrinityLogFormatter(
-        fmt='%(levelname)8s  %(asctime)s  %(shortname)20s  %(message)s',
+        fmt='%(levelname)8s  %(asctime)s.%(msecs)03d  %(shortname)20s  %(message)s',
         datefmt='%m-%d %H:%M:%S'
     )
 
